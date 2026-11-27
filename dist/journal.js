@@ -7,6 +7,9 @@ const count=document.querySelector('#journal-count');
 const titles=['ENGLISH. BUT MAKE IT REAL.','STOP STUDYING. START SPEAKING.','TALK LIKE A HUMAN.','NO BORING SHIT.'];
 const pages=titles.map((alt,i)=>({src:new URL('journal-0'+(i+1)+'.png',import.meta.url).href,alt}));
 let book=null,index=0,started=false;
+const reveal=()=>host.classList.add('is-ready');
+const readyObserver=new MutationObserver(()=>{if(mount.querySelector('[data-leafthrough][data-state="ready"]')){reveal();readyObserver.disconnect();}});
+readyObserver.observe(mount,{subtree:true,childList:true,attributes:true,attributeFilter:['data-state']});
 function update(visible=[index]){
   const first=visible[0]??index,last=visible.at(-1)??first;
   index=first;
@@ -25,11 +28,24 @@ async function start(){
   if(started)return;started=true;
   try{
     const {LeafThrough}=await import('https://cdn.jsdelivr.net/npm/leafthrough@0.1.8/+esm');
-    book=new LeafThrough(mount,{pages,startPage:index,label:'Vedrushaa / The English Issue',layout:'auto',pageAspect:1.377,loop:false,paper:{showThrough:0.015},interaction:{keyboard:true},onReady:()=>host.classList.add('is-ready'),onPageChange:detail=>update(detail.visiblePages)});
+    book=new LeafThrough(mount,{pages,startPage:index,label:'Vedrushaa / The English Issue',layout:'auto',pageAspect:1.377,loop:false,paper:{showThrough:0.015},interaction:{keyboard:true},onReady:reveal,onPageChange:detail=>update(detail.visiblePages)});
     update(book.visiblePages);
-  }catch(error){book=null;host.classList.add('has-error');console.warn('Journal: flat-page fallback',error);}
+  }catch(error){book=null;readyObserver.disconnect();host.classList.remove('is-ready');host.classList.add('has-error');console.warn('Journal: flat-page fallback',error);}
 }
 if('IntersectionObserver' in window){
   const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){observer.disconnect();start();}},{rootMargin:'300px'});
   observer.observe(host);
 }else start();
+
+/* Warm up after the initial load; direct menu/hash navigation gets priority. */
+function warmUp(){
+  if('requestIdleCallback' in window) window.requestIdleCallback(start,{timeout:1800});
+  else window.setTimeout(start,350);
+}
+if(document.readyState==='complete') warmUp();
+else window.addEventListener('load',warmUp,{once:true});
+document.addEventListener('click',event=>{
+  if(event.target instanceof Element && event.target.closest('a[href="#journal"]')) start();
+},true);
+window.addEventListener('hashchange',()=>{if(location.hash==='#journal')start();});
+if(location.hash==='#journal')start();

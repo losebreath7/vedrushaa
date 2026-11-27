@@ -36,40 +36,60 @@
   document.head.append(style);
   const clamp = n => Math.max(0,Math.min(1,n));
   const ease = n => {n=clamp(n);return n*n*(3-2*n);};
+  // Scroll selects the scene; elapsed time drives the complete entrance.
+  const duration=1500, exitEnd=420;
   const actors = [
-    {el:cast.querySelector('.pupil'),start:.22,end:.38,edge:'bottom'},
-    {el:cast.querySelector('.teacher'),start:.35,end:.52,edge:'right'},
-    {el:cast.querySelector('.back'),start:.49,end:.64,edge:'bottom'},
-    {el:cast.querySelector('.left'),start:.53,end:.68,edge:'left'},
-    {el:cast.querySelector('.front'),start:.57,end:.73,edge:'right'}
+    {el:cast.querySelector('.pupil'),start:420,end:920,edge:'bottom'},
+    {el:cast.querySelector('.teacher'),start:650,end:1150,edge:'right'},
+    {el:cast.querySelector('.back'),start:850,end:1300,edge:'bottom'},
+    {el:cast.querySelector('.left'),start:950,end:1400,edge:'left'},
+    {el:cast.querySelector('.front'),start:1050,end:1500,edge:'right'}
   ];
-  let queued=false;
-  function render(){
+  let frame=0, time=0, target=0, previous=null, initialized=false, active=false;
+  function render(now){
+    frame=0;
     const bounds=section.getBoundingClientRect();
-    const p=clamp(-bounds.top/Math.max(1,bounds.height-pin.clientHeight));
+    const distance=Math.max(1,bounds.height-pin.clientHeight);
+    const scroll=-bounds.top;
+    const p=clamp(scroll/distance);
     const motion=!reduced.matches;
-    const exit=motion?ease((p-.025)/.195):0;
+    // Hysteresis avoids repeated triggers from tiny scroll reversals.
+    if(!active && scroll>=Math.min(48,distance*.025)) active=true;
+    else if(active && scroll<=8) active=false;
+    target=active?duration:0;
+    if(!initialized){
+      time=scroll>pin.clientHeight?target:0;
+      initialized=true;
+    }
+    const dt=previous===null?0:Math.max(0,now-previous);
+    previous=now;
+    if(!motion)time=target;
+    else if(time<target)time=Math.min(target,time+dt);
+    else if(time>target)time=Math.max(target,time-dt);
+    const exit=motion?ease(time/exitEnd):0;
     panel.style.transform='translate3d('+(-exit*pin.clientWidth)+'px,0,0)';
-    panel.inert=motion&&exit>=.999;
+    panel.style.visibility=motion&&time>=exitEnd?'hidden':'visible';
+    panel.inert=motion&&time>=exitEnd;
     if(panel.inert)speech(false);
-    classroom.style.visibility=motion&&p<.22?'hidden':'visible';
-    classroom.setAttribute('aria-hidden',String(motion&&p<.22));
+    const showClass=!motion||time>=exitEnd;
+    classroom.style.visibility=showClass?'visible':'hidden';
+    classroom.setAttribute('aria-hidden',String(!showClass));
     const w=pin.clientWidth,h=pin.clientHeight;
     for(const {el,start,end,edge} of actors){
-      const t=motion?1-ease((p-start)/(end-start)):0;
+      const t=motion?1-ease((time-start)/(end-start)):0;
       const x=edge==='left'?-w*t:edge==='right'?w*t:0;
       const y=edge==='bottom'?h*t:0;
       el.style.transform='translate3d('+x+'px,'+y+'px,0)';
     }
-    caption.textContent=!motion||p<.74?'':lines[p<.83?0:p<.92?1:2];
+    caption.textContent=!motion||time<duration?'':lines[p<.83?0:p<.92?1:2];
+    if(motion&&time!==target)frame=requestAnimationFrame(render);
+    else previous=null;
   }
   function schedule(){
-    if(queued)return;
-    queued=true;
-    requestAnimationFrame(()=>{queued=false;render();});
+    if(!frame)frame=requestAnimationFrame(render);
   }
   addEventListener('scroll',schedule,{passive:true});
   addEventListener('resize',schedule);
   reduced.addEventListener('change',schedule);
-  render();
+  render(performance.now());
 })();

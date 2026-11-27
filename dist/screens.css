@@ -14,7 +14,7 @@ main .stage{height:100svh;min-height:560px;position:relative;overflow:hidden;iso
 #site-nav #menu,#site-nav #links {position:fixed;left:var(--nav-x);right:auto;z-index:6;}
 #site-nav #menu {top:var(--nav-y);min-height:44px;min-width:52px;text-align:left;color:white;mix-blend-mode:difference;font-size:clamp(12px,.94vw,18px);}
 #site-nav #links {top:calc(var(--nav-y) + 44px);max-height:65svh;overflow:auto;box-shadow:0 4px 16px #0002}
-#kate {position:relative;height:220svh;min-height:0;background:#f4f1e9;padding:0;display:block}
+#kate {position:relative;height:calc(100svh + 48px);min-height:0;background:#f4f1e9;padding:0;display:block}
 main .story-pin {position:sticky;top:0;height:100svh;min-height:0;overflow:hidden;}
 .bio-panel,.classroom {position:absolute;inset:0;overflow:hidden}
 .bio-panel {z-index:1;background:#f4f1e9;}

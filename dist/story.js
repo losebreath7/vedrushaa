@@ -39,18 +39,32 @@
     }, 28);
   }
   const clamp = v => Math.max(0, Math.min(1,v));
+  const smooth = v => { const t = clamp(v); return t*t*(3-2*t); };
+  const bioItems = Array.from(panel.children);
+  // Both compositions share the pinned canvas; neither panel moves across the other.
+  panel.style.background = 'transparent';
+  panel.style.pointerEvents = 'none';
+  trigger.style.pointerEvents = 'auto';
   function render() {
     const bounds = section.getBoundingClientRect();
     const p = clamp(-bounds.top / Math.max(1,bounds.height-section.querySelector('.story-pin').clientHeight));
-    const slide = reduced.matches ? 0 : clamp((p-.105)/.19);
-    panel.style.transform = 'translateX('+(-100*slide)+'%)';
-    panel.inert = slide >= 1;
+    const fade = reduced.matches ? 0 : smooth((p-.075)/.18);
+    const girlFade = reduced.matches ? 0 : smooth((p-.105)/.16);
+    panel.style.transform = 'none';
+    bioItems.forEach(item => {
+      const isGirl = item === trigger || item === bubble;
+      const amount = isGirl ? girlFade : fade;
+      item.style.opacity = String(1-amount);
+      item.style.transform = reduced.matches ? '' : 'translateY('+(-12*amount)+'px)';
+    });
+    panel.inert = !reduced.matches && p >= .265;
+    trigger.style.pointerEvents = panel.inert || girlFade > .5 ? 'none' : 'auto';
     if(panel.inert) speech(false);
     classroom.setAttribute('aria-hidden',String(!reduced.matches && p < .108));
     steps.forEach(({img,start,end}) => {
-      const fraction = reduced.matches ? 1 : clamp((p-start)/(end-start));
+      const fraction = reduced.matches ? 1 : smooth((p-start)/(end-start));
       img.style.opacity = fraction;
-      img.style.transform = 'translateX('+((1-fraction)*85)+'%)';
+      img.style.transform = reduced.matches ? 'none' : 'translate3d(0,'+((1-fraction)*16)+'px,0)';
     });
     typeLine(reduced.matches || p < .30 ? -1 : p < .53 ? 0 : p < .84 ? 1 : 2);
   }

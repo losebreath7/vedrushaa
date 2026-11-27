@@ -20,7 +20,7 @@
   const cast = classroom.querySelector('.class-cast');
   const transcript = classroom.querySelector('.story-transcript');
   const caption = classroom.querySelector('.caption');
-  const lines = Array.from(transcript.querySelectorAll('p'), p => p.textContent);
+  const line = transcript.querySelector('p').textContent;
   const style = document.createElement('style');
   style.textContent = `
     #kate .story-pin {background:#f4f1e9}
@@ -51,7 +51,6 @@
     const bounds=section.getBoundingClientRect();
     const distance=Math.max(1,bounds.height-pin.clientHeight);
     const scroll=-bounds.top;
-    const p=clamp(scroll/distance);
     const motion=!reduced.matches;
     // Hysteresis avoids repeated triggers from tiny scroll reversals.
     if(!active && scroll>=Math.min(48,distance*.025)) active=true;
@@ -81,7 +80,7 @@
       const y=edge==='bottom'?h*t:0;
       el.style.transform='translate3d('+x+'px,'+y+'px,0)';
     }
-    caption.textContent=!motion||time<duration?'':lines[p<.83?0:p<.92?1:2];
+    caption.textContent=!motion||time<duration?'':line;
     if(motion&&time!==target)frame=requestAnimationFrame(render);
     else previous=null;
   }

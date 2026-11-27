@@ -2,13 +2,13 @@
 (() => {
   'use strict';
   const root = document.documentElement;
-  const sections = Array.from(document.querySelectorAll('#home,#kate,#check,#journal,#feedback,#gallery,#money'));
+  const sections = Array.from(document.querySelectorAll('#home,#kate,#check,#journal,#feedback,#gallery,#money,#money-talks'));
   const desktop = matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const style = document.createElement('style');
   style.textContent = [
     'html {scroll-behavior:auto;scroll-snap-type:y proximity}',
-    '#home,#kate,#check,#journal,#feedback,#gallery,#money {scroll-snap-align:start;scroll-snap-stop:normal}',
+    '#home,#kate,#check,#journal,#feedback,#gallery,#money,#money-talks {scroll-snap-align:start;scroll-snap-stop:normal}',
     'html.cinematic-scroll {scroll-snap-type:none}',
     '@media(prefers-reduced-motion:reduce){html{scroll-snap-type:none}}'
   ].join('\n');
@@ -40,6 +40,7 @@
     points = [];
     freeRanges = [];
     for (const el of sections) {
+      if (el.hidden) continue;
       const start = position(el);
       points.push(start);
       const extra = el.getBoundingClientRect().height - viewport;

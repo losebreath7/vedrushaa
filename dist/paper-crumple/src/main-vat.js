@@ -39,6 +39,7 @@ camera.lookAt(0, cameraSettings.targetY, 0);
 function applyCameraSettings() {
   camera.position.set(cameraSettings.x, cameraSettings.y, cameraSettings.z);
   camera.lookAt(0, cameraSettings.targetY, 0);
+  syncFloorHorizon();
   updateOpenPose();
 }
 
@@ -54,6 +55,14 @@ app.appendChild(renderer.domElement);
 // 床と背面の壁
 const FLOOR_VISUAL_Y = -0.1;
 const WALL_Z = -1.1;
+// Align the CSS floor with the projected rear edge of the physical stage.
+function syncFloorHorizon() {
+  camera.updateMatrixWorld(true);
+  const edge = new THREE.Vector3(0, FLOOR_VISUAL_Y, WALL_Z).project(camera);
+  const percent = THREE.MathUtils.clamp((1 - edge.y) * 50, 0, 100);
+  app.closest('#feedback').style.setProperty('--feedback-floor-line', `${percent}%`);
+}
+syncFloorHorizon();
 
 const floorMat = new THREE.ShadowMaterial({ color: 0x000000, opacity: 0.24, depthWrite: false });
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 12), floorMat);
@@ -1144,6 +1153,7 @@ function updatePaperMotion(paper, dt) {
 new ResizeObserver(() => {
   camera.aspect = width() / height();
   camera.updateProjectionMatrix();
+  syncFloorHorizon();
   renderer.setSize(width(), height());
   composer.setSize(width(), height());
   updateOpenPose();

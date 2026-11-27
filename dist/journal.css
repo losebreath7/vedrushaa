@@ -10,3 +10,8 @@
 #journal .journal-controls button{padding:5px 12px;font-size:20px;line-height:1}
 #journal .journal-controls button:disabled{opacity:.3;cursor:default}
 @media(max-width:767px),(orientation:portrait){#journal .journal-book{right:2%;width:48%;height:48%;top:33%}#journal .journal-fallback{left:0}#journal .journal-controls{width:100%;gap:4px;font-size:12px}#journal .journal-controls button{padding:5px 9px}}
+
+/* Keep page geometry unchanged; retain controls only if WebGL fails, or for keyboard access. */
+#journal .journal-controls{opacity:0;pointer-events:none}
+#journal .journal-controls:focus-within{opacity:1;pointer-events:auto}
+#journal .journal-book.has-error .journal-controls{opacity:1;pointer-events:auto}

@@ -15,64 +15,49 @@
   trigger.onclick = e => speech(e.pointerType === 'mouse' || bubble.hidden);
   document.addEventListener('pointerdown', e => { if (!trigger.contains(e.target)) speech(false); });
 
-  const steps = [
-    ['pupil', .108, .30], ['teacher', .43, .53], ['back', .67, .75],
-    ['left', .72, .80], ['front', .77, .84]
-  ].map(([name, start, end]) => ({img: classroom.querySelector('.'+name), start, end}));
-  const lines = Array.from(classroom.querySelectorAll('.story-transcript p'), p => p.textContent);
-  const caption = classroom.querySelector('.caption');
+  const pin = section.querySelector('.story-pin');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  let lineIndex = -1;
-  let timer;
-  function typeLine(index) {
-    if (index === lineIndex) return;
-    lineIndex = index;
-    clearInterval(timer);
-    caption.textContent = '';
-    if (index < 0) return;
-    const line = lines[index];
-    let count = 0;
-    timer = setInterval(() => {
-      count += 2;
-      caption.textContent = line.slice(0,count);
-      if (count >= line.length) clearInterval(timer);
-    }, 28);
-  }
-  const clamp = v => Math.max(0, Math.min(1,v));
-  const smooth = v => { const t = clamp(v); return t*t*(3-2*t); };
-  const bioItems = Array.from(panel.children);
-  // Both compositions share the pinned canvas; neither panel moves across the other.
-  panel.style.background = 'transparent';
-  panel.style.pointerEvents = 'none';
-  trigger.style.pointerEvents = 'auto';
-  function render() {
-    const bounds = section.getBoundingClientRect();
-    const p = clamp(-bounds.top / Math.max(1,bounds.height-section.querySelector('.story-pin').clientHeight));
-    const fade = reduced.matches ? 0 : smooth((p-.075)/.18);
-    const girlFade = reduced.matches ? 0 : smooth((p-.105)/.16);
-    panel.style.transform = 'none';
-    bioItems.forEach(item => {
-      const isGirl = item === trigger || item === bubble;
-      const amount = isGirl ? girlFade : fade;
-      item.style.opacity = String(1-amount);
-      item.style.transform = reduced.matches ? '' : 'translateY('+(-12*amount)+'px)';
-    });
-    panel.inert = !reduced.matches && p >= .265;
-    trigger.style.pointerEvents = panel.inert || girlFade > .5 ? 'none' : 'auto';
-    if(panel.inert) speech(false);
-    classroom.setAttribute('aria-hidden',String(!reduced.matches && p < .108));
-    steps.forEach(({img,start,end}) => {
-      const fraction = reduced.matches ? 1 : smooth((p-start)/(end-start));
-      img.style.opacity = fraction;
-      img.style.transform = reduced.matches ? 'none' : 'translate3d(0,'+((1-fraction)*16)+'px,0)';
-    });
-    typeLine(reduced.matches || p < .30 ? -1 : p < .53 ? 0 : p < .84 ? 1 : 2);
-  }
+  const world = document.createElement('div');
+  world.className = 'story-world';
+  pin.append(world);
+  world.append(panel, classroom);
+  const cast = classroom.querySelector('.class-cast');
+  const transcript = classroom.querySelector('.story-transcript');
+  const caption = classroom.querySelector('.caption');
+  const lines = Array.from(transcript.querySelectorAll('p'), p => p.textContent);
+  const style = document.createElement('style');
+  style.textContent = `
+    #kate .story-world {position:absolute;inset:0 auto 0 0;width:200%;height:100%;background:#f4f1e9;will-change:transform}
+    #kate .story-world .bio-panel,#kate .story-world .classroom {position:absolute;top:0;bottom:0;width:50%;height:100%;overflow:visible;background:transparent}
+    #kate .story-world .bio-panel {left:0;right:auto;z-index:1}
+    #kate .story-world .classroom {left:50%;right:auto;z-index:2}
+    #kate .story-world .class-art {opacity:1;transform:none}
+    #kate .story-world .caption {z-index:2}
+    @media(prefers-reduced-motion:reduce){
+      #kate .story-world {position:relative;inset:auto;width:100%;height:auto;transform:none!important;will-change:auto}
+      #kate .story-world .bio-panel,#kate .story-world .classroom {position:relative;inset:auto;width:100%;height:100svh;min-height:540px;overflow:hidden}
+    }
+  `;
+  document.head.append(style);
+  const clamp = n => Math.max(0,Math.min(1,n));
+  // One camera transform, no masks, individual translations or opacity transitions.
+  // Reserve the final portion of the scroll for reading the three lines.
   let queued = false;
-  function schedule() {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(() => {queued=false;render();});
+  function render(){
+    const bounds = section.getBoundingClientRect();
+    const p = clamp(-bounds.top / Math.max(1,bounds.height-pin.clientHeight));
+    const travel = clamp((p-.06)/.64);
+    const distance = world.offsetWidth-pin.clientWidth;
+    world.style.transform = reduced.matches ? 'none' : 'translate3d('+(-travel*distance)+'px,0,0)';
+    panel.inert = !reduced.matches && travel >= .999;
+    if(panel.inert) speech(false);
+    classroom.setAttribute('aria-hidden',String(!reduced.matches && travel === 0));
+    caption.textContent = reduced.matches || travel < .35 ? '' : lines[p < .79 ? 0 : p < .9 ? 1 : 2];
+  }
+  function schedule(){
+    if(queued)return;
+    queued=true;
+    requestAnimationFrame(()=>{queued=false;render();});
   }
   addEventListener('scroll',schedule,{passive:true});
   addEventListener('resize',schedule);

@@ -53,7 +53,7 @@
     const scroll=-bounds.top;
     const motion=!reduced.matches;
     // Hysteresis avoids repeated triggers from tiny scroll reversals.
-    if(!active && scroll>=Math.min(48,distance*.025)) active=true;
+    if(!active && scroll>=Math.min(24,distance*.5)) active=true;
     else if(active && scroll<=8) active=false;
     target=active?duration:0;
     if(!initialized){
@@ -87,6 +87,14 @@
   function schedule(){
     if(!frame)frame=requestAnimationFrame(render);
   }
+  addEventListener('wheel',e=>{
+    if(reduced.matches||e.ctrlKey||e.deltaY<=0)return;
+    const b=section.getBoundingClientRect();
+    if(b.top>0||b.bottom<pin.clientHeight-2)return;
+    if(time>=duration)return;
+    if(!active){active=true;window.scrollBy(0,24);schedule();}
+    e.preventDefault();
+  },{passive:false});
   addEventListener('scroll',schedule,{passive:true});
   addEventListener('resize',schedule);
   reduced.addEventListener('change',schedule);

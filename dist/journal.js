@@ -27,7 +27,7 @@ async function start(){
     const {LeafThrough}=await import('https://cdn.jsdelivr.net/npm/leafthrough@0.1.8/+esm');
     book=new LeafThrough(mount,{pages,startPage:index,label:'Vedrushaa / The English Issue',layout:'auto',pageAspect:1.377,loop:false,paper:{showThrough:0.015},interaction:{keyboard:true},onReady:()=>host.classList.add('is-ready'),onPageChange:detail=>update(detail.visiblePages)});
     update(book.visiblePages);
-  }catch(error){book=null;console.warn('Journal: flat-page fallback',error);}
+  }catch(error){book=null;host.classList.add('has-error');console.warn('Journal: flat-page fallback',error);}
 }
 if('IntersectionObserver' in window){
   const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){observer.disconnect();start();}},{rootMargin:'300px'});

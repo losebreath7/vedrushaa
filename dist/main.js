@@ -12,6 +12,12 @@ menu.onclick = () => {
   menu.setAttribute('aria-expanded', 'true');
 };
 el('links').onclick = closeMenu;
+document.addEventListener('pointerdown', event => {
+  if (!el('site-nav').contains(event.target)) closeMenu();
+});
+el('site-nav').addEventListener('focusout', event => {
+  if (!el('site-nav').contains(event.relatedTarget)) closeMenu();
+});
 const responses = ['Начнём с коротких реплик вслух.', 'Поработаем с ритмом и интонацией.', 'Разберём грамматику на твоих фразах.', 'Попробуем флиртовать своими словами.', 'Дадим себе право на ошибку.', 'Посмотрим, что уже получается в разговоре.'];
 document.querySelectorAll('.chip').forEach(button => {
   button.onclick = () => {
@@ -22,9 +28,6 @@ document.querySelectorAll('.chip').forEach(button => {
 const reader = el('reader');
 document.querySelector('.book').onclick = () => reader.showModal();
 reader.querySelector('button').onclick = () => reader.close();
-document.querySelectorAll('.screen-menu a').forEach(link => {
-  link.onclick = () => link.closest('details').open = false;
-});
 const fileTitles = ['Полноценный урок, а не созвон на 15 минут.', 'Индивидуальные с Кейт', 'Мини-группы', 'Индивидуальные с учителем команды'];
 const fileNotes = ['', 'Один на один с Катей. Расскажи, для чего тебе английский и что сейчас сложнее всего.', 'Практика с другими учениками. Спроси в боте, есть ли группа твоего уровня.', 'Персональные занятия с преподавателем школы. Расскажи о своей цели, чтобы подобрать формат.'];
 document.querySelectorAll('.file').forEach((button, i, buttons) => {
@@ -58,7 +61,7 @@ function finish(){
   intro.hidden=true;
   intro.classList.remove('tearing');
   document.documentElement.style.overflow='';
-  document.querySelectorAll('header,main,footer').forEach(n=>n.inert=false);
+  document.querySelectorAll('#site-nav,header,main,footer').forEach(n=>n.inert=false);
   if (restoreFocus) el('menu').focus({preventScroll:true});
 }
 function playIntro(){
@@ -66,7 +69,7 @@ function playIntro(){
   closeMenu();
   intro.hidden=false;
   document.documentElement.style.overflow='hidden';
-  document.querySelectorAll('header,main,footer').forEach(n=>n.inert=true);
+  document.querySelectorAll('#site-nav,header,main,footer').forEach(n=>n.inert=true);
   startTear=setTimeout(()=>{
     if (reduced.matches) return finish();
     intro.classList.add('tearing');
@@ -75,7 +78,7 @@ function playIntro(){
 }
 el('skip').onclick=finish;
 el('replay').onclick=playIntro;
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){finish();closeMenu();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if (!el('links').hidden) menu.focus(); finish();closeMenu();}});
 const art = new Image();
 art.src = matchMedia('(max-width:700px)').matches?'intro-mobile.webp':'intro.webp';
 if(!reduced.matches && !location.hash && scrollY<2){

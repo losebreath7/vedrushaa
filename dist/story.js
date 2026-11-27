@@ -17,42 +17,51 @@
 
   const pin = section.querySelector('.story-pin');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const world = document.createElement('div');
-  world.className = 'story-world';
-  pin.append(world);
-  world.append(panel, classroom);
   const cast = classroom.querySelector('.class-cast');
   const transcript = classroom.querySelector('.story-transcript');
   const caption = classroom.querySelector('.caption');
   const lines = Array.from(transcript.querySelectorAll('p'), p => p.textContent);
   const style = document.createElement('style');
   style.textContent = `
-    #kate .story-world {position:absolute;inset:0 auto 0 0;width:200%;height:100%;background:#f4f1e9;will-change:transform}
-    #kate .story-world .bio-panel,#kate .story-world .classroom {position:absolute;top:0;bottom:0;width:50%;height:100%;overflow:visible;background:transparent}
-    #kate .story-world .bio-panel {left:0;right:auto;z-index:1}
-    #kate .story-world .classroom {left:50%;right:auto;z-index:2}
-    #kate .story-world .class-art {opacity:1;transform:none}
-    #kate .story-world .caption {z-index:2}
+    #kate .story-pin {background:#f4f1e9}
+    #kate .bio-panel {z-index:2;background:transparent;will-change:transform}
+    #kate .classroom {z-index:1;background:transparent;overflow:hidden}
+    #kate .class-art {opacity:1;will-change:transform}
+    #kate .caption {z-index:2}
     @media(prefers-reduced-motion:reduce){
-      #kate .story-world {position:relative;inset:auto;width:100%;height:auto;transform:none!important;will-change:auto}
-      #kate .story-world .bio-panel,#kate .story-world .classroom {position:relative;inset:auto;width:100%;height:100svh;min-height:540px;overflow:hidden}
+      #kate .bio-panel,#kate .class-art {transform:none!important;will-change:auto}
+      #kate .classroom {visibility:visible!important}
     }
   `;
   document.head.append(style);
   const clamp = n => Math.max(0,Math.min(1,n));
-  // One camera transform, no masks, individual translations or opacity transitions.
-  // Reserve the final portion of the scroll for reading the three lines.
-  let queued = false;
+  const ease = n => {n=clamp(n);return n*n*(3-2*n);};
+  const actors = [
+    {el:cast.querySelector('.pupil'),start:.22,end:.38,edge:'bottom'},
+    {el:cast.querySelector('.teacher'),start:.35,end:.52,edge:'right'},
+    {el:cast.querySelector('.back'),start:.49,end:.64,edge:'bottom'},
+    {el:cast.querySelector('.left'),start:.53,end:.68,edge:'left'},
+    {el:cast.querySelector('.front'),start:.57,end:.73,edge:'right'}
+  ];
+  let queued=false;
   function render(){
-    const bounds = section.getBoundingClientRect();
-    const p = clamp(-bounds.top / Math.max(1,bounds.height-pin.clientHeight));
-    const travel = clamp((p-.06)/.64);
-    const distance = world.offsetWidth-pin.clientWidth;
-    world.style.transform = reduced.matches ? 'none' : 'translate3d('+(-travel*distance)+'px,0,0)';
-    panel.inert = !reduced.matches && travel >= .999;
-    if(panel.inert) speech(false);
-    classroom.setAttribute('aria-hidden',String(!reduced.matches && travel === 0));
-    caption.textContent = reduced.matches || travel < .35 ? '' : lines[p < .79 ? 0 : p < .9 ? 1 : 2];
+    const bounds=section.getBoundingClientRect();
+    const p=clamp(-bounds.top/Math.max(1,bounds.height-pin.clientHeight));
+    const motion=!reduced.matches;
+    const exit=motion?ease((p-.025)/.195):0;
+    panel.style.transform='translate3d('+(-exit*pin.clientWidth)+'px,0,0)';
+    panel.inert=motion&&exit>=.999;
+    if(panel.inert)speech(false);
+    classroom.style.visibility=motion&&p<.22?'hidden':'visible';
+    classroom.setAttribute('aria-hidden',String(motion&&p<.22));
+    const w=pin.clientWidth,h=pin.clientHeight;
+    for(const {el,start,end,edge} of actors){
+      const t=motion?1-ease((p-start)/(end-start)):0;
+      const x=edge==='left'?-w*t:edge==='right'?w*t:0;
+      const y=edge==='bottom'?h*t:0;
+      el.style.transform='translate3d('+x+'px,'+y+'px,0)';
+    }
+    caption.textContent=!motion||p<.74?'':lines[p<.83?0:p<.92?1:2];
   }
   function schedule(){
     if(queued)return;

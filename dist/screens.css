@@ -63,3 +63,11 @@ main .story-pin {position:sticky;top:0;height:100svh;min-height:0;overflow:hidde
  .bio-intro {left:6%;top:30%;width:62%;font-size:clamp(12px,3.3vw,16px)}
  .bio-intro p+p {margin-top:.7em}
 }
+
+/* Native gesture stops for touch scrolling. The long classroom scene scrolls freely. */
+@media (any-pointer:coarse) {
+ html {scroll-snap-type:y proximity}
+ #check,#journal,#feedback,#gallery,#money {scroll-snap-align:start;scroll-snap-stop:always}
+}
+.journal-hold {height:auto}
+#journal {position:relative}

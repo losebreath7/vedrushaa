@@ -23,7 +23,7 @@ const colorSettings = {
   background: "#000000", // 背面の壁と背景
   floor: "#111111",
 };
-scene.background = new THREE.Color(colorSettings.background);
+scene.background = null;
 
 // カメラ — 斜め前方から見る (GUI で調整できる)
 const cameraSettings = { x: 0, y: 2.2, z: 3.6, targetY: 0.35 };
@@ -42,7 +42,8 @@ function applyCameraSettings() {
   updateOpenPose();
 }
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setClearColor(0x000000, 0);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, matchMedia("(pointer:coarse)").matches ? 1.25 : 1.75));
 renderer.setSize(width(), height());
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -54,7 +55,7 @@ app.appendChild(renderer.domElement);
 const FLOOR_VISUAL_Y = -0.1;
 const WALL_Z = -1.1;
 
-const floorMat = new THREE.MeshStandardMaterial({ color: colorSettings.floor });
+const floorMat = new THREE.ShadowMaterial({ color: 0x000000, opacity: 0.24, depthWrite: false });
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 12), floorMat);
 floor.rotation.x = -Math.PI / 2;
 floor.position.set(0, FLOOR_VISUAL_Y, 1);
@@ -67,7 +68,7 @@ const wallMat = new THREE.MeshStandardMaterial({
 const wall = new THREE.Mesh(new THREE.PlaneGeometry(16, 6), wallMat);
 wall.position.set(0, FLOOR_VISUAL_Y + 3, WALL_Z);
 wall.receiveShadow = true;
-scene.add(wall);
+// Wall remains a physics boundary only; no opaque visual wall.
 
 // ライト
 const ambient = new THREE.AmbientLight(0xffffff, 1.25);
@@ -163,7 +164,7 @@ colorFolder
   .addColor(colorSettings, "background")
   .name("Background")
   .onChange((v) => {
-    scene.background.set(v);
+    // Keep the scene transparent.
     wallMat.color.set(v);
   });
 colorFolder
@@ -1028,7 +1029,8 @@ function tick() {
     }
   }
 
-  composer.render();
+  // Render directly to preserve alpha; SSAO fullscreen pass writes opaque pixels.
+  renderer.render(scene, camera);
   if (papers.length) app.classList.add("is-ready");
 }
 

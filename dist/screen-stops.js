@@ -1,4 +1,4 @@
-// Native scrolling with optional, interruptible GSAP proximity snapping.
+// Native scrolling with optional, interruptible GSAP nearest-screen snapping.
 (() => {
   'use strict';
   const root = document.documentElement;
@@ -13,7 +13,7 @@
     '@media(prefers-reduced-motion:reduce){html{scroll-snap-type:none}}'
   ].join('\n');
   document.head.appendChild(style);
-  let trigger = null, loading = null, points = [], lastInput = -Infinity;
+  let trigger = null, loading = null, points = [], freeRanges = [], lastInput = -Infinity;
   const blocked = () => !!document.querySelector('dialog[open],#intro:not([hidden])');
   const load = src => new Promise((resolve,reject) => {
     const script = document.createElement('script');
@@ -34,7 +34,24 @@
   }
   function measure(self){
     const max = Math.max(1,self.end-self.start);
-    points = sections.map(el => Math.max(0,Math.min(max,el.getBoundingClientRect().top+window.scrollY-self.start)));
+    const y = window.scrollY;
+    const viewport = document.documentElement.clientHeight;
+    const position = el => Math.max(0, Math.min(max, el.getBoundingClientRect().top + y - self.start));
+    points = [];
+    freeRanges = [];
+    for (const el of sections) {
+      const start = position(el);
+      points.push(start);
+      const extra = el.getBoundingClientRect().height - viewport;
+      if (extra > 24) {
+        const end = Math.min(max, start + extra);
+        points.push(end);
+        freeRanges.push([start, end]);
+      }
+    }
+    const footer = document.querySelector('footer');
+    if (footer) points.push(position(footer));
+    points = [...new Set(points)].sort((a,b) => a-b);
   }
   function cancel(){
     lastInput=performance.now();
@@ -46,14 +63,13 @@
     const current=Math.max(0,Math.min(span,self.scroll()-self.start));
     const stay=current/span;
     if(blocked() || reduced.matches || performance.now()-lastInput<120) return stay;
-    const limit=Math.min(innerHeight*.42,380);
+    // Preserve native scrolling throughout the pinned story and oversized panels.
+    if (freeRanges.some(([start,end]) => current >= start && current <= end)) return stay;
     let best=null, distance=Infinity;
     for(const point of points){
-      const delta=point-current, d=Math.abs(delta);
-      if(d>limit || (d>8 && delta*self.direction<0))continue;
-      if(d<distance){best=point;distance=d;}
+      const d=Math.abs(point-current);
+      if(d<distance || (d===distance && self.direction>0)){best=point;distance=d;}
     }
-    // No forced jumps through long story scenes, tall sections or the footer.
     return best===null||distance<2?stay:best/span;
   }
   async function setup(){

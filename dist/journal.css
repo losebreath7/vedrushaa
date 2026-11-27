@@ -15,3 +15,12 @@
 #journal .journal-controls{opacity:0;pointer-events:none}
 #journal .journal-controls:focus-within{opacity:1;pointer-events:auto}
 #journal .journal-book.has-error .journal-controls{opacity:1;pointer-events:auto}
+
+/* No static-to-3D swap: reserve the original geometry and reveal only a ready reader. */
+#journal .journal-fallback{visibility:hidden}
+#journal-mount{opacity:0;visibility:hidden;transition:opacity .3s ease}
+#journal .journal-book.is-ready #journal-mount{opacity:1;visibility:visible}
+#journal .journal-book:not(.is-ready) .journal-controls{visibility:hidden}
+#journal .journal-book.has-error .journal-fallback{visibility:visible}
+#journal .journal-book.has-error .journal-controls{visibility:visible}
+@media(prefers-reduced-motion:reduce){#journal-mount{transition:none}}

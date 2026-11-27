@@ -26,7 +26,7 @@ document.querySelectorAll('.chip').forEach(button => {
   };
 });
 const reader = el('reader');
-document.querySelector('.book').onclick = () => reader.showModal();
+
 reader.querySelector('button').onclick = () => reader.close();
 const fileTitles = ['Полноценный урок, а не созвон на 15 минут.', 'Английский один на один с Кейт.', 'Учимся вместе, говорим по-настоящему.', 'Твой английский. Твой темп.'];
 const fileNotes = [

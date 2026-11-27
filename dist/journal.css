@@ -1,0 +1,12 @@
+/* Journal only: preserve the original composition and right-hand cover position. */
+#journal .journal-book{position:absolute;right:6%;top:4.7%;width:62%;height:86.7%;z-index:2;pointer-events:none}
+#journal-mount{position:absolute;inset:0 0 34px;pointer-events:none}
+#journal-mount [data-leafthrough-hit-area]{pointer-events:auto;touch-action:pan-y pinch-zoom}
+#journal-mount [data-leafthrough]{pointer-events:none}
+#journal .journal-fallback{position:absolute;inset:0 0 34px 50%;display:flex;justify-content:center;align-items:center;pointer-events:none}
+#journal .journal-fallback img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;box-shadow:2px 6px 16px #0003}
+#journal .journal-book.is-ready .journal-fallback{display:none}
+#journal .journal-controls{position:absolute;right:0;bottom:0;width:50%;display:flex;align-items:center;justify-content:center;gap:12px;font:500 14px/1 Inter,Arial,sans-serif;pointer-events:auto}
+#journal .journal-controls button{padding:5px 12px;font-size:20px;line-height:1}
+#journal .journal-controls button:disabled{opacity:.3;cursor:default}
+@media(max-width:767px),(orientation:portrait){#journal .journal-book{right:2%;width:48%;height:48%;top:33%}#journal .journal-fallback{left:0}#journal .journal-controls{width:100%;gap:4px;font-size:12px}#journal .journal-controls button{padding:5px 9px}}

@@ -43,6 +43,53 @@ document.querySelectorAll('.file').forEach((button, i, buttons) => {
     el('file-terms').textContent = i === 0 ? '60 минут　 1 900 ₽　 Online / Zoom' : 'Расписание и стоимость — в Telegram';
   };
 });
+
+// Folder interaction: stable hit area, layered cover and paper, reversible motion.
+(() => {
+  const section = el('money');
+  const paper = el('file-info');
+  const buttons = Array.from(section.querySelectorAll('.file'));
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  const style = document.createElement('style');
+  style.textContent = "\n#money .file{--folder-color:#a6dfff;--folder-ink:#151515;--folder-lift:clamp(24px,5vh,56px);background:transparent;clip-path:none;overflow:visible;isolation:isolate;perspective:850px;color:var(--folder-ink);z-index:2}\n#money .file-1{--folder-color:#d11516;--folder-ink:white}\n#money .file-2{--folder-color:#166238;--folder-ink:white}\n#money .file-3{--folder-color:#fff47c;--folder-ink:#30282a}\n#money .file-back,#money .file-front{position:absolute;inset:0;border-radius:16px 0 0 0;clip-path:polygon(0 0,40% 0,44% 18%,100% 18%,100% 100%,0 100%);pointer-events:none;background:var(--folder-color)}\n#money .file-back{filter:brightness(.83);z-index:-3}\n#money .file-preview{position:absolute;left:6%;right:6%;top:20%;bottom:8%;z-index:-2;border-radius:3px;background:#fff;box-shadow:0 2px 12px #0002;pointer-events:none;transform:translateY(0);transition:transform .48s cubic-bezier(.22,1,.36,1)}\n#money .file-preview::after{content:\"\";position:absolute;left:7%;right:12%;top:13%;height:24%;background:repeating-linear-gradient(to bottom,#bfc0bd 0 1px,transparent 1px 8px)}\n#money .file-front{z-index:-1;transform-origin:center bottom;transition:transform .48s cubic-bezier(.22,1,.36,1),filter .3s}\n#money .file-label{display:flex;flex-direction:column;align-items:flex-start;gap:inherit;pointer-events:none;transform-origin:center bottom;transition:transform .48s cubic-bezier(.22,1,.36,1)}\n#money .file:hover b{text-decoration:none}\n#money.open .file[aria-expanded=false]{background:transparent;color:#71746c;--folder-color:#e7e9e2}\n#money .file[aria-expanded=true]{z-index:4}\n#money .file[aria-expanded=true] .file-front{transform:rotateX(-24deg) translateY(5px);filter:brightness(.96)}\n#money .file[aria-expanded=true] .file-label{transform:translateY(8px)}\n#money .file[aria-expanded=true] .file-preview{transform:translateY(calc(-1 * var(--folder-lift)))}\n@media(hover:hover) and (pointer:fine){\n#money .file:hover,#money .file:focus-visible{z-index:5}\n#money .file:hover .file-front,#money .file:focus-visible .file-front{transform:rotateX(-24deg) translateY(5px);filter:brightness(.96)}\n#money .file:hover .file-label,#money .file:focus-visible .file-label{transform:translateY(8px)}\n#money .file:hover .file-preview,#money .file:focus-visible .file-preview{transform:translateY(calc(-1 * var(--folder-lift)))}\n}\n#money #file-info{z-index:1}\n#money.open #file-info{z-index:6}\n@media(max-width:700px){#money .file{--folder-lift:20px}#money .file-label{gap:12px}}\n@media(prefers-reduced-motion:reduce){#money .file-front,#money .file-label,#money .file-preview{transition:none}}\n";
+  document.head.appendChild(style);
+  buttons.forEach(button => {
+    const label = document.createElement('span');
+    label.className = 'file-label';
+    label.append(...Array.from(button.childNodes));
+    for (const name of ['file-back','file-preview','file-front']) {
+      const layer = document.createElement('span');
+      layer.className = name;
+      layer.setAttribute('aria-hidden','true');
+      button.append(layer);
+    }
+    button.append(label);
+    // Keep the existing content/selection handler as the single source of truth.
+    const select = button.onclick;
+    button.onclick = event => {
+      const wasOpen = button.getAttribute('aria-expanded') === 'true';
+      select.call(button,event);
+      if (wasOpen || motion.matches || !paper.animate) return;
+      paper.getAnimations().forEach(animation => animation.cancel());
+      const from = button.getBoundingClientRect();
+      const to = paper.getBoundingClientRect();
+      if (!to.width || !to.height) return;
+      const dx = from.left + from.width/2 - to.left - to.width/2;
+      const dy = from.top + from.height*.22 - to.top - to.height*.75;
+      paper.animate([
+        {transform:'translate('+dx+'px,'+dy+'px) scale(.68)',opacity:0},
+        {opacity:1,offset:.28},
+        {transform:'translate(0,0) scale(1)',opacity:1}
+      ],{duration:520,easing:'cubic-bezier(.22,1,.36,1)'});
+    };
+  });
+  section.addEventListener('keydown',event => {
+    if(event.key !== 'Escape') return;
+    const active = buttons.find(button => button.getAttribute('aria-expanded') === 'true');
+    if(active){active.click();active.focus({preventScroll:true});}
+  });
+})();
+
 const intro = el('intro');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const seam = Array.from({length:101}, (_,i) => {

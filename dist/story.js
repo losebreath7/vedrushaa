@@ -16,8 +16,8 @@
   document.addEventListener('pointerdown', e => { if (!trigger.contains(e.target)) speech(false); });
 
   const steps = [
-    ['pupil', .08, .26], ['teacher', .34, .49], ['back', .60, .72],
-    ['left', .68, .80], ['front', .78, .90]
+    ['pupil', .108, .30], ['teacher', .43, .53], ['back', .67, .75],
+    ['left', .72, .80], ['front', .77, .84]
   ].map(([name, start, end]) => ({img: classroom.querySelector('.'+name), start, end}));
   const lines = Array.from(classroom.querySelectorAll('.story-transcript p'), p => p.textContent);
   const caption = classroom.querySelector('.caption');
@@ -42,17 +42,17 @@
   function render() {
     const bounds = section.getBoundingClientRect();
     const p = clamp(-bounds.top / Math.max(1,bounds.height-section.querySelector('.story-pin').clientHeight));
-    const slide = reduced.matches ? 0 : clamp((p-.025)/.21);
+    const slide = reduced.matches ? 0 : clamp((p-.105)/.19);
     panel.style.transform = 'translateX('+(-100*slide)+'%)';
     panel.inert = slide >= 1;
     if(panel.inert) speech(false);
-    classroom.setAttribute('aria-hidden',String(!reduced.matches && p < .08));
+    classroom.setAttribute('aria-hidden',String(!reduced.matches && p < .108));
     steps.forEach(({img,start,end}) => {
       const fraction = reduced.matches ? 1 : clamp((p-start)/(end-start));
       img.style.opacity = fraction;
       img.style.transform = 'translateX('+((1-fraction)*85)+'%)';
     });
-    typeLine(reduced.matches || p < .15 ? -1 : p < .35 ? 0 : p < .61 ? 1 : 2);
+    typeLine(reduced.matches || p < .30 ? -1 : p < .53 ? 0 : p < .84 ? 1 : 2);
   }
   let queued = false;
   function schedule() {
